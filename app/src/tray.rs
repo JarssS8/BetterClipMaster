@@ -25,7 +25,7 @@ pub fn build(app: &App) -> tauri::Result<()> {
 
     TrayIconBuilder::with_id("main")
         .icon(icon)
-        .tooltip("godclipboard")
+        .tooltip("BetterClipMaster")
         .menu(&menu)
         .on_menu_event(move |app, event| match event.id().as_ref() {
             "open" => hotkey::toggle_overlay(app),

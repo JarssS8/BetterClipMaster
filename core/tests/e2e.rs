@@ -3,9 +3,9 @@
 //! capture of all four kinds, dedup, privacy filtering, fuzzy search, pinning,
 //! pruning (favorites survive), deletion, and on-disk persistence.
 
-use godclipboard_core::model::{ClipKind, NewItem};
-use godclipboard_core::watcher::{Capture, MockSource, Watcher};
-use godclipboard_core::{rank, Store};
+use betterclipmaster_core::model::{ClipKind, NewItem};
+use betterclipmaster_core::watcher::{Capture, MockSource, Watcher};
+use betterclipmaster_core::{rank, Store};
 
 #[test]
 fn full_lifecycle_all_kinds() {
@@ -13,7 +13,7 @@ fn full_lifecycle_all_kinds() {
 
     // Capture every supported kind plus a sensitive item and a duplicate.
     let mut source = MockSource::new(vec![
-        Capture::text("https://github.com/jarsbinksjar/godclipboard"),
+        Capture::text("https://github.com/jarsbinksjar/betterclipmaster"),
         Capture::text("config.env DB_URL=postgres://localhost"),
         Capture {
             kind: ClipKind::Rich,
@@ -29,7 +29,7 @@ fn full_lifecycle_all_kinds() {
             formats: vec!["CF_HDROP".to_string()],
         },
         Capture::sensitive("super-secret-password"),
-        Capture::text("https://github.com/jarsbinksjar/godclipboard"), // re-copy -> bump
+        Capture::text("https://github.com/jarsbinksjar/betterclipmaster"), // re-copy -> bump
     ]);
 
     // Drain every capture.
@@ -48,7 +48,7 @@ fn full_lifecycle_all_kinds() {
     let recent = store.recent(10).unwrap();
     assert_eq!(
         recent[0].content,
-        "https://github.com/jarsbinksjar/godclipboard"
+        "https://github.com/jarsbinksjar/betterclipmaster"
     );
 
     // All four kinds are represented.

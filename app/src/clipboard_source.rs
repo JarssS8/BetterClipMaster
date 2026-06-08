@@ -8,8 +8,8 @@
 //! Capture of rich-text (HTML) and file lists from the OS clipboard is a
 //! follow-up (the core model already supports both kinds); see README.
 
-use godclipboard_core::model::{compute_hash, ClipKind};
-use godclipboard_core::watcher::{Capture, ClipboardSource};
+use betterclipmaster_core::model::{compute_hash, ClipKind};
+use betterclipmaster_core::watcher::{Capture, ClipboardSource};
 
 /// Polling clipboard reader with change detection.
 pub struct OsClipboard {

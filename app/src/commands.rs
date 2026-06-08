@@ -7,8 +7,8 @@ use base64::Engine;
 use serde::Serialize;
 use tauri::{Manager, State};
 
-use godclipboard_core::model::{ClipItem, ClipKind};
-use godclipboard_core::{rank, Store};
+use betterclipmaster_core::model::{ClipItem, ClipKind};
+use betterclipmaster_core::{rank, Store};
 
 /// Maximum items pulled from the store before fuzzy filtering.
 const LIST_LIMIT: usize = 1000;

@@ -1,4 +1,4 @@
-//! Core logic for godclipboard.
+//! Core logic for betterclipmaster.
 //!
 //! This crate is platform-independent and contains no GUI, hotkey or OS clipboard
 //! code. All business logic (model, persistence, search, privacy, and the watcher

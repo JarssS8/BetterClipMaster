@@ -1,6 +1,6 @@
-//! godclipboard — Tauri application shell.
+//! betterclipmaster — Tauri application shell.
 //!
-//! Wires the platform-independent `godclipboard-core` (store, watcher, search)
+//! Wires the platform-independent `betterclipmaster-core` (store, watcher, search)
 //! to the OS: a background clipboard-watcher thread, a global hotkey, a tray
 //! icon, and the overlay UI served from `ui/`.
 
@@ -16,8 +16,8 @@ use std::time::Duration;
 
 use tauri::Manager;
 
-use godclipboard_core::watcher::Watcher;
-use godclipboard_core::Store;
+use betterclipmaster_core::watcher::Watcher;
+use betterclipmaster_core::Store;
 
 use clipboard_source::OsClipboard;
 use commands::AppState;
@@ -29,7 +29,7 @@ const POLL_INTERVAL: Duration = Duration::from_millis(500);
 
 /// Path to the history database in the per-user data directory.
 fn db_path() -> std::path::PathBuf {
-    if let Some(dirs) = directories::ProjectDirs::from("com", "jars", "godclipboard") {
+    if let Some(dirs) = directories::ProjectDirs::from("com", "jars", "betterclipmaster") {
         let dir = dirs.data_dir();
         let _ = std::fs::create_dir_all(dir);
         dir.join("clips.db")

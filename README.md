@@ -33,7 +33,7 @@ atajo de teclado global para buscar y pegar lo que copiaste antes.
 ## Estructura del proyecto
 
 ```
-godclipboard/
+betterclipmaster/
 ├── core/   # librería Rust pura: modelo, store SQLite, búsqueda, privacidad, watcher
 ├── app/    # shell Tauri: comandos, hotkey, bandeja, pegar, UI (HTML/CSS/JS)
 ├── scripts/generate-icons.mjs   # genera los iconos sin dependencias externas
@@ -50,9 +50,9 @@ depender de GUI ni del SO. `app` es una capa fina específica de plataforma.
 No necesita librerías de GUI:
 
 ```bash
-cargo test -p godclipboard-core
-cargo clippy -p godclipboard-core -- -D warnings
-cargo fmt -p godclipboard-core -- --check
+cargo test -p betterclipmaster-core
+cargo clippy -p betterclipmaster-core -- -D warnings
+cargo fmt -p betterclipmaster-core -- --check
 ```
 
 ### Compilar y ejecutar la app
@@ -103,7 +103,7 @@ en Windows y Linux.
 ## Privacidad
 
 El historial se guarda **sin cifrar** en el directorio de datos del usuario
-(`%APPDATA%/com.jars.godclipboard` en Windows). El contenido marcado como
+(`%APPDATA%/com.jars.betterclipmaster` en Windows). El contenido marcado como
 sensible por gestores de contraseñas no se guarda. El cifrado de la base de
 datos es una mejora futura.
 
@@ -119,8 +119,8 @@ datos es una mejora futura.
 
 ## Documentación
 
-- Diseño: [`docs/superpowers/specs/2026-06-08-godclipboard-design.md`](docs/superpowers/specs/2026-06-08-godclipboard-design.md)
-- Plan: [`docs/superpowers/plans/2026-06-08-godclipboard.md`](docs/superpowers/plans/2026-06-08-godclipboard.md)
+- Diseño: [`docs/superpowers/specs/2026-06-08-betterclipmaster-design.md`](docs/superpowers/specs/2026-06-08-betterclipmaster-design.md)
+- Plan: [`docs/superpowers/plans/2026-06-08-betterclipmaster.md`](docs/superpowers/plans/2026-06-08-betterclipmaster.md)
 - Arquitectura: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Licencia

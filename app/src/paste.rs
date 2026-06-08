@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use godclipboard_core::model::{ClipItem, ClipKind};
+use betterclipmaster_core::model::{ClipItem, ClipKind};
 
 /// Put an item onto the OS clipboard.
 ///

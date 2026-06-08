@@ -1,4 +1,4 @@
-# Arquitectura de godclipboard
+# Arquitectura de betterclipmaster
 
 ## Visión general
 
@@ -8,7 +8,7 @@ que se muestra con un atajo global.
 
 ```
 ┌─────────────────────────────────────────────┐
-│  godclipboard (Tauri app, corre en bandeja)  │
+│  betterclipmaster (Tauri app, corre en bandeja)  │
 │                                               │
 │  ┌─────────────┐      ┌──────────────────┐  │
 │  │ Backend Rust │◄────►│ UI WebView (HTML) │  │
@@ -25,7 +25,7 @@ que se muestra con un atajo global.
 
 El proyecto es un **workspace Cargo** con dos crates:
 
-### `core` (`godclipboard-core`) — librería Rust pura
+### `core` (`betterclipmaster-core`) — librería Rust pura
 
 Sin GUI, sin atajos, sin código de portapapeles del SO. Toda la lógica de
 negocio vive aquí y se puede testear de extremo a extremo sin display.
@@ -38,7 +38,7 @@ negocio vive aquí y se puede testear de extremo a extremo sin display.
 | `privacy`     | Detección de contenido sensible por marcadores de formato.            | —                 |
 | `watcher`     | Trait `ClipboardSource` + `Watcher::poll_once` + `MockSource` (test). | model, privacy, store |
 
-### `app` (`godclipboard`) — shell Tauri
+### `app` (`betterclipmaster`) — shell Tauri
 
 Capa fina específica de plataforma que cablea el core al SO.
 

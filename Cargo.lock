@@ -161,6 +161,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "betterclipmaster"
+version = "0.1.0"
+dependencies = [
+ "arboard",
+ "base64 0.22.1",
+ "betterclipmaster-core",
+ "clipboard-win",
+ "directories",
+ "enigo",
+ "image",
+ "log",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-log",
+]
+
+[[package]]
+name = "betterclipmaster-core"
+version = "0.1.0"
+dependencies = [
+ "nucleo-matcher",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1465,39 +1498,6 @@ dependencies = [
  "glib-sys",
  "libc",
  "system-deps",
-]
-
-[[package]]
-name = "godclipboard"
-version = "0.1.0"
-dependencies = [
- "arboard",
- "base64 0.22.1",
- "clipboard-win",
- "directories",
- "enigo",
- "godclipboard-core",
- "image",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-log",
-]
-
-[[package]]
-name = "godclipboard-core"
-version = "0.1.0"
-dependencies = [
- "nucleo-matcher",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror 1.0.69",
 ]
 
 [[package]]

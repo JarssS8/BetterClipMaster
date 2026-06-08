@@ -1,14 +1,14 @@
 [package]
-name = "godclipboard-core"
+name = "betterclipmaster-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "Core logic for godclipboard: model, SQLite store, fuzzy search, privacy and clipboard watcher"
+description = "Core logic for betterclipmaster: model, SQLite store, fuzzy search, privacy and clipboard watcher"
 
 [lib]
-name = "godclipboard_core"
+name = "betterclipmaster_core"
 path = "src/lib.rs"
 
 [dependencies]
