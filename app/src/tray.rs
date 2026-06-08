@@ -13,9 +13,10 @@ use crate::hotkey;
 pub fn build(app: &App) -> tauri::Result<()> {
     let open = MenuItemBuilder::with_id("open", "Abrir").build(app)?;
     let pause = MenuItemBuilder::with_id("pause", "Pausar captura").build(app)?;
+    let settings = MenuItemBuilder::with_id("settings", "Ajustes").build(app)?;
     let quit = MenuItemBuilder::with_id("quit", "Salir").build(app)?;
     let menu = MenuBuilder::new(app)
-        .items(&[&open, &pause, &quit])
+        .items(&[&open, &pause, &settings, &quit])
         .build()?;
 
     let icon = app
@@ -39,6 +40,9 @@ pub fn build(app: &App) -> tauri::Result<()> {
                     "Pausar captura"
                 };
                 let _ = pause.set_text(label);
+            }
+            "settings" => {
+                let _ = crate::commands::open_settings(app.clone());
             }
             "quit" => app.exit(0),
             _ => {}

@@ -1,14 +1,16 @@
 //! Tauri commands bridging the UI (webview) to the core store.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 use base64::Engine;
 use serde::Serialize;
-use tauri::{Manager, State};
+use tauri::{Manager, State, WebviewUrl, WebviewWindowBuilder};
 
 use betterclipmaster_core::model::{ClipItem, ClipKind};
 use betterclipmaster_core::{rank, Store};
+
+use crate::settings::Settings;
 
 /// Maximum items pulled from the store before fuzzy filtering.
 const LIST_LIMIT: usize = 1000;
@@ -18,13 +20,28 @@ pub struct AppState {
     pub store: Mutex<Store>,
     /// Capture pause flag, shared with the background watcher thread.
     pub paused: Arc<AtomicBool>,
+    /// Whether to skip privacy-marked content (shared with the watcher).
+    pub ignore_sensitive: Arc<AtomicBool>,
+    /// History cap (shared with the watcher for pruning).
+    pub max_items: Arc<AtomicUsize>,
+    /// Current persisted settings.
+    pub settings: Mutex<Settings>,
 }
 
 impl AppState {
-    pub fn new(store: Store, paused: Arc<AtomicBool>) -> AppState {
+    pub fn new(
+        store: Store,
+        paused: Arc<AtomicBool>,
+        ignore_sensitive: Arc<AtomicBool>,
+        max_items: Arc<AtomicUsize>,
+        settings: Settings,
+    ) -> AppState {
         AppState {
             store: Mutex::new(store),
             paused,
+            ignore_sensitive,
+            max_items,
+            settings: Mutex::new(settings),
         }
     }
 }
@@ -125,5 +142,91 @@ pub fn paste_item(app: tauri::AppHandle, state: State<AppState>, id: i64) -> Res
 
     // Best-effort paste; if it fails the item is still on the clipboard.
     crate::paste::send_paste();
+    Ok(())
+}
+
+/// Return the current settings.
+#[tauri::command]
+pub fn get_settings(state: State<AppState>) -> Result<Settings, String> {
+    let s = state.settings.lock().map_err(map_err)?;
+    Ok(s.clone())
+}
+
+/// Apply and persist new settings: re-register the hotkey, toggle autostart,
+/// update the history cap and privacy flag.
+#[tauri::command]
+pub fn set_settings(
+    app: tauri::AppHandle,
+    state: State<AppState>,
+    new: Settings,
+) -> Result<(), String> {
+    use std::str::FromStr;
+    use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+
+    let new = new.sanitized();
+
+    // Validate the shortcut before changing anything.
+    let shortcut = Shortcut::from_str(&new.shortcut)
+        .map_err(|_| format!("Atajo no válido: {}", new.shortcut))?;
+
+    // Re-register the global hotkey.
+    let gs = app.global_shortcut();
+    let _ = gs.unregister_all();
+    gs.register(shortcut)
+        .map_err(|e| format!("No se pudo registrar el atajo: {e}"))?;
+
+    // Toggle autostart.
+    {
+        use tauri_plugin_autostart::ManagerExt;
+        let al = app.autolaunch();
+        let res = if new.autostart {
+            al.enable()
+        } else {
+            al.disable()
+        };
+        if let Err(e) = res {
+            log::warn!("autostart toggle failed: {e}");
+        }
+    }
+
+    // Update shared runtime flags and prune to the new cap.
+    state
+        .ignore_sensitive
+        .store(new.ignore_sensitive, Ordering::SeqCst);
+    state.max_items.store(new.max_items, Ordering::SeqCst);
+    if let Ok(store) = state.store.lock() {
+        let _ = store.prune(new.max_items);
+    }
+
+    // Persist and update in-memory copy.
+    crate::settings::save(&new)?;
+    if let Ok(mut cur) = state.settings.lock() {
+        *cur = new;
+    }
+    Ok(())
+}
+
+/// Delete the entire history.
+#[tauri::command]
+pub fn clear_history(state: State<AppState>) -> Result<(), String> {
+    let store = state.store.lock().map_err(map_err)?;
+    store.clear().map_err(map_err)
+}
+
+/// Open (or focus) the settings window.
+#[tauri::command]
+pub fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(win) = app.get_webview_window("settings") {
+        win.show().map_err(map_err)?;
+        win.set_focus().map_err(map_err)?;
+        return Ok(());
+    }
+    WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("settings.html".into()))
+        .title("BetterClipMaster · Ajustes")
+        .inner_size(460.0, 460.0)
+        .resizable(false)
+        .center()
+        .build()
+        .map_err(map_err)?;
     Ok(())
 }

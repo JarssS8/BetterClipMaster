@@ -68,15 +68,25 @@ pub trait ClipboardSource {
 pub struct Watcher;
 
 impl Watcher {
-    /// Read once from `source`; if there is a non-sensitive change, store it.
+    /// Read once from `source`, skipping privacy-marked content.
     ///
     /// Returns the inserted/bumped row id, or `None` if nothing was stored
     /// (no change, sensitive content, or a consecutive duplicate).
     pub fn poll_once(source: &mut dyn ClipboardSource, store: &Store) -> Result<Option<i64>> {
+        Self::poll_once_filtered(source, store, true)
+    }
+
+    /// Like [`poll_once`](Self::poll_once) but with explicit control over
+    /// whether sensitive (privacy-marked) content is skipped.
+    pub fn poll_once_filtered(
+        source: &mut dyn ClipboardSource,
+        store: &Store,
+        skip_sensitive: bool,
+    ) -> Result<Option<i64>> {
         let Some(capture) = source.read() else {
             return Ok(None);
         };
-        if is_sensitive(&capture.formats) {
+        if skip_sensitive && is_sensitive(&capture.formats) {
             return Ok(None);
         }
         store.insert(&capture.into_new_item())
@@ -138,5 +148,14 @@ mod tests {
         let store = Store::open_in_memory().unwrap();
         let mut source = MockSource::new(vec![]);
         assert!(Watcher::poll_once(&mut source, &store).unwrap().is_none());
+    }
+
+    #[test]
+    fn poll_filtered_can_keep_sensitive() {
+        let store = Store::open_in_memory().unwrap();
+        let mut source = MockSource::new(vec![Capture::sensitive("kept")]);
+        // skip_sensitive = false stores even privacy-marked content.
+        Watcher::poll_once_filtered(&mut source, &store, false).unwrap();
+        assert_eq!(store.count().unwrap(), 1);
     }
 }
