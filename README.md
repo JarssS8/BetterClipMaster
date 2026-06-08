@@ -1,4 +1,4 @@
-# godclipboard
+# BetterClipMaster
 
 Gestor de portapapeles nativo estilo **Alfred 5**, escrito en Rust + Tauri.
 Corre en segundo plano, guarda tu historial del portapapeles y se abre con un
