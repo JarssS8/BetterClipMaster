@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BetterClipMaster · Ajustes</title>
+    <style>
+      :root {
+        --bg: #1e1e24;
+        --line: #2c2c34;
+        --text: #cfcfd6;
+        --dim: #8a8a95;
+        --accent: #4a9dd8;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 14px;
+        padding: 20px 22px;
+        user-select: none;
+      }
+      h1 { font-size: 17px; margin-bottom: 4px; }
+      .sub { color: var(--dim); font-size: 12px; margin-bottom: 18px; }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .row label { flex: 1; }
+      .row .hint { display: block; color: var(--dim); font-size: 11px; margin-top: 2px; }
+      input[type="number"] {
+        width: 90px; background: #15151a; border: 1px solid var(--line);
+        color: var(--text); padding: 6px 8px; border-radius: 6px; outline: none;
+      }
+      #shortcut {
+        min-width: 130px; text-align: center; background: #15151a;
+        border: 1px solid var(--line); color: var(--text);
+        padding: 6px 10px; border-radius: 6px; cursor: pointer; font-family: monospace;
+      }
+      #shortcut.recording { border-color: var(--accent); color: var(--accent); }
+      input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+      .actions { display: flex; gap: 10px; margin-top: 20px; }
+      button {
+        flex: 1; padding: 9px; border: 1px solid var(--line); border-radius: 7px;
+        background: #262630; color: var(--text); cursor: pointer; font-size: 13px;
+      }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #08131c; font-weight: 600; }
+      button.danger { color: #e57373; }
+      button:hover { filter: brightness(1.12); }
+      #status { margin-top: 12px; font-size: 12px; min-height: 16px; color: var(--dim); }
+      #status.ok { color: #6ec07a; }
+      #status.err { color: #e57373; }
+    </style>
+  </head>
+  <body>
+    <h1>Ajustes</h1>
+    <div class="sub">BetterClipMaster</div>
+
+    <div class="row">
+      <label>
+        Atajo global
+        <span class="hint">Clic en el recuadro y pulsa la combinación</span>
+      </label>
+      <div id="shortcut" tabindex="0">Ctrl+Shift+V</div>
+    </div>
+
+    <div class="row">
+      <label>
+        Iniciar con Windows
+        <span class="hint">Arranca automáticamente al iniciar sesión</span>
+      </label>
+      <input type="checkbox" id="autostart" />
+    </div>
+
+    <div class="row">
+      <label>
+        Máximo de items
+        <span class="hint">Los favoritos no cuentan ni se borran</span>
+      </label>
+      <input type="number" id="maxItems" min="10" max="100000" step="10" />
+    </div>
+
+    <div class="row">
+      <label>
+        Ignorar contraseñas
+        <span class="hint">No guardar contenido marcado como sensible</span>
+      </label>
+      <input type="checkbox" id="ignoreSensitive" />
+    </div>
+
+    <div class="actions">
+      <button id="clear" class="danger">Borrar historial</button>
+      <button id="save" class="primary">Guardar</button>
+    </div>
+    <div id="status"></div>
+
+    <script src="settings.js"></script>
+  </body>
+</html>

@@ -12,8 +12,11 @@ pub fn toggle_shortcut() -> Shortcut {
 }
 
 /// Handler invoked by the plugin on every registered shortcut event.
-pub fn handle(app: &AppHandle, shortcut: &Shortcut, state: ShortcutState) {
-    if shortcut != &toggle_shortcut() || state != ShortcutState::Pressed {
+///
+/// Only one shortcut is ever registered at a time (the configurable toggle), so
+/// any `Pressed` event means "toggle the overlay".
+pub fn handle(app: &AppHandle, _shortcut: &Shortcut, state: ShortcutState) {
+    if state != ShortcutState::Pressed {
         return;
     }
     toggle_overlay(app);

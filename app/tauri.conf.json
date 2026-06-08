@@ -27,12 +27,6 @@
     ],
     "security": {
       "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src 'self'"
-    },
-    "trayIcon": {
-      "id": "main",
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": false,
-      "tooltip": "BetterClipMaster"
     }
   },
   "bundle": {
