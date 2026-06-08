@@ -213,6 +213,48 @@ pub fn clear_history(state: State<AppState>) -> Result<(), String> {
     store.clear().map_err(map_err)
 }
 
+/// Current application version (from the package metadata).
+#[tauri::command]
+pub fn app_version(app: tauri::AppHandle) -> String {
+    app.package_info().version.to_string()
+}
+
+/// Info about an available update.
+#[derive(Serialize)]
+pub struct UpdateInfo {
+    pub version: String,
+    pub notes: String,
+}
+
+/// Check whether a newer release is available. Returns `None` if up to date.
+#[tauri::command]
+pub async fn check_update(app: tauri::AppHandle) -> Result<Option<UpdateInfo>, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let updater = app.updater().map_err(map_err)?;
+    match updater.check().await.map_err(map_err)? {
+        Some(update) => Ok(Some(UpdateInfo {
+            version: update.version,
+            notes: update.body.unwrap_or_default(),
+        })),
+        None => Ok(None),
+    }
+}
+
+/// Download and install the latest update, then restart the app.
+#[tauri::command]
+pub async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let updater = app.updater().map_err(map_err)?;
+    let Some(update) = updater.check().await.map_err(map_err)? else {
+        return Err("Ya tienes la última versión".to_string());
+    };
+    update
+        .download_and_install(|_downloaded, _total| {}, || {})
+        .await
+        .map_err(map_err)?;
+    app.restart();
+}
+
 /// Open (or focus) the settings window.
 #[tauri::command]
 pub fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
