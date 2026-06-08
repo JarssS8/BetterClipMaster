@@ -19,11 +19,11 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - name: Format check
-        run: cargo fmt -p godclipboard-core -- --check
+        run: cargo fmt -p betterclipmaster-core -- --check
       - name: Clippy
-        run: cargo clippy -p godclipboard-core -- -D warnings
+        run: cargo clippy -p betterclipmaster-core -- -D warnings
       - name: Test
-        run: cargo test -p godclipboard-core
+        run: cargo test -p betterclipmaster-core
 
   app:
     name: Build app (${{ matrix.os }})
@@ -51,6 +51,6 @@ jobs:
             libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
             build-essential
       - name: Clippy (app)
-        run: cargo clippy -p godclipboard --all-targets -- -D warnings
+        run: cargo clippy -p betterclipmaster --all-targets -- -D warnings
       - name: Build (app, no bundle)
-        run: cargo build -p godclipboard --release
+        run: cargo build -p betterclipmaster --release
