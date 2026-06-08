@@ -27,9 +27,6 @@ pub enum Error {
     #[error("serialization error: {0}")]
     Serde(#[from] serde_json::Error),
 
-    #[error("image error: {0}")]
-    Image(#[from] image::ImageError),
-
     #[error("{0}")]
     Other(String),
 }
