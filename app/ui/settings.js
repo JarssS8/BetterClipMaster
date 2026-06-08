@@ -10,6 +10,9 @@ const ignoreEl = document.getElementById("ignoreSensitive");
 const saveEl = document.getElementById("save");
 const clearEl = document.getElementById("clear");
 const statusEl = document.getElementById("status");
+const versionEl = document.getElementById("version");
+const checkUpdateEl = document.getElementById("checkUpdate");
+const updateStatusEl = document.getElementById("updateStatus");
 
 let shortcut = "Ctrl+Shift+V";
 let recording = false;
@@ -99,4 +102,42 @@ clearEl.addEventListener("click", async () => {
   }
 });
 
+async function loadVersion() {
+  try {
+    const v = await invoke("app_version");
+    versionEl.textContent = "Versión " + v;
+  } catch (e) {
+    versionEl.textContent = "Versión —";
+  }
+}
+
+checkUpdateEl.addEventListener("click", async () => {
+  updateStatusEl.textContent = "Buscando…";
+  updateStatusEl.style.color = "var(--dim)";
+  try {
+    const upd = await invoke("check_update");
+    if (!upd) {
+      updateStatusEl.textContent = "Ya tienes la última versión ✓";
+      updateStatusEl.style.color = "#6ec07a";
+      return;
+    }
+    updateStatusEl.textContent = `Nueva versión ${upd.version} disponible.`;
+    updateStatusEl.style.color = "var(--accent)";
+    checkUpdateEl.textContent = "Instalar y reiniciar";
+    checkUpdateEl.onclick = async () => {
+      updateStatusEl.textContent = "Descargando e instalando… la app se reiniciará.";
+      try {
+        await invoke("install_update");
+      } catch (e) {
+        updateStatusEl.textContent = "Error al actualizar: " + e;
+        updateStatusEl.style.color = "#e57373";
+      }
+    };
+  } catch (e) {
+    updateStatusEl.textContent = "Error al comprobar: " + e;
+    updateStatusEl.style.color = "#e57373";
+  }
+});
+
 load();
+loadVersion();

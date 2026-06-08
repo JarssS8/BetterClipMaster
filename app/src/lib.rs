@@ -104,6 +104,8 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -127,6 +129,9 @@ pub fn run() {
             commands::set_settings,
             commands::clear_history,
             commands::open_settings,
+            commands::app_version,
+            commands::check_update,
+            commands::install_update,
         ])
         .setup(move |app| {
             use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};

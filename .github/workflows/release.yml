@@ -83,10 +83,13 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           projectPath: app
           tagName: v${{ needs.version.outputs.version }}
           releaseName: BetterClipMaster v${{ needs.version.outputs.version }}
-          releaseBody: "Automated release from master. See commit history for changes."
+          releaseBody: "Automated release from master. Actualización automática disponible desde la app (Ajustes › Buscar actualizaciones)."
           releaseDraft: false
           prerelease: false
+          includeUpdaterJson: true
