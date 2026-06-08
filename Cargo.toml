@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = ["core", "app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["jars <jarsbinksjar@gmail.com>"]
+repository = "https://github.com/jarsbinksjar/godclipboard"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"

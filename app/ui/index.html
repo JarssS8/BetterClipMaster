@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>godclipboard</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="search">
+        <span class="search-icon">⌕</span>
+        <input
+          id="query"
+          type="text"
+          placeholder="Buscar en el portapapeles…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <div class="body">
+        <ul id="list" class="list" tabindex="-1"></ul>
+        <div id="preview" class="preview"></div>
+      </div>
+      <div class="footer">
+        <span><b>Enter</b> pegar</span>
+        <span><b>↑↓</b> navegar</span>
+        <span><b>Ctrl+P</b> fijar</span>
+        <span><b>Del</b> borrar</span>
+        <span><b>Esc</b> cerrar</span>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
