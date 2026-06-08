@@ -18,17 +18,35 @@ atajo de teclado global para buscar y pegar lo que copiaste antes.
   contraseñas (formato `Clipboard Viewer Ignore` en Windows).
 - ⌨️ Totalmente manejable con teclado, ventana flotante que aparece sobre todo.
 - 🖥️ Vive en la bandeja del sistema; pausar/reanudar captura desde ahí.
+- ⚙️ **Panel de ajustes**: atajo configurable, iniciar con Windows, tamaño del
+  historial, toggle de privacidad y borrar historial.
+- 🔄 **Auto-actualización** de un clic: la app detecta nuevas versiones y se
+  actualiza sola (releases firmados).
 
 ## Atajos
 
-| Atajo            | Acción                          |
-| ---------------- | ------------------------------- |
-| `Ctrl+Shift+V`   | Abrir / cerrar el overlay       |
-| `↑` / `↓`        | Navegar la lista                |
-| `Enter`          | Pegar el item seleccionado      |
-| `Ctrl+P`         | Fijar / desfijar favorito       |
-| `Del`            | Borrar item                     |
-| `Esc`            | Cerrar el overlay               |
+| Atajo                  | Acción                          |
+| ---------------------- | ------------------------------- |
+| `Ctrl+Shift+V` (def.)  | Abrir / cerrar el overlay       |
+| `↑` / `↓`              | Navegar la lista                |
+| `Enter`                | Pegar el item seleccionado      |
+| `Ctrl+P`               | Fijar / desfijar favorito       |
+| `Del`                  | Borrar item                     |
+| `Esc`                  | Cerrar el overlay               |
+
+El atajo global es **configurable** desde la bandeja › **Ajustes**.
+
+## Ajustes y actualizaciones
+
+Desde el icono de la bandeja › **Ajustes**:
+
+- **Atajo global** configurable (grábalo pulsando la combinación).
+- **Iniciar con Windows** (autostart).
+- **Máximo de items** del historial (los favoritos no cuentan ni se borran).
+- **Ignorar contraseñas** (privacidad).
+- **Borrar historial**.
+- **Buscar actualizaciones**: comprueba si hay una versión nueva y, si la hay,
+  la descarga, instala y reinicia con un clic.
 
 ## Estructura del proyecto
 
@@ -88,17 +106,16 @@ cargo tauri build
 node scripts/generate-icons.mjs
 ```
 
-## Releases automáticos
+## CI y releases automáticos
 
-Cada **push a `master`** dispara `.github/workflows/release.yml`, que:
-
-1. Calcula la versión `‹major›.‹minor›.‹run_number›` (major.minor salen de
-   `app/tauri.conf.json`), garantizando una versión nueva y creciente.
-2. Compila los bundles nativos para **Windows** y **Linux** con `tauri-action`.
-3. Publica un **GitHub Release** etiquetado `v‹version›` con los artefactos.
-
-`ci.yml` corre en cada push/PR: tests + clippy + fmt del core, y build del `app`
-en Windows y Linux.
+- **`ci.yml`** corre en ramas y PRs (no en master): tests + clippy + fmt del
+  core, y build del `app` en Windows y Linux.
+- **`release.yml`** corre en cada **push a `master`**: pasa un gate de tests y
+  luego, con `tauri-action`:
+  1. Calcula la versión `‹major›.‹minor›.‹run_number›` (versión nueva y creciente).
+  2. Compila y **firma** los bundles nativos de Windows y Linux.
+  3. Publica un **GitHub Release** `v‹version›` con los artefactos y un
+     `latest.json` que la app usa para auto-actualizarse.
 
 ## Privacidad
 
