@@ -117,12 +117,6 @@ datos es una mejora futura.
 - **Linux/Wayland**: los atajos globales y la simulación de teclas están
   restringidos; soporte completo planificado para la fase 2 (X11 primero).
 
-## Documentación
-
-- Diseño: [`docs/superpowers/specs/2026-06-08-betterclipmaster-design.md`](docs/superpowers/specs/2026-06-08-betterclipmaster-design.md)
-- Plan: [`docs/superpowers/plans/2026-06-08-betterclipmaster.md`](docs/superpowers/plans/2026-06-08-betterclipmaster.md)
-- Arquitectura: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-
 ## Licencia
 
 MIT
