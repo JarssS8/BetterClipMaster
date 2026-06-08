@@ -1,0 +1,37 @@
+[package]
+name = "godclipboard"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Alfred-style clipboard manager (Tauri shell)"
+default-run = "godclipboard"
+
+[lib]
+name = "godclipboard_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "godclipboard"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+godclipboard-core = { path = "../core" }
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-global-shortcut = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+arboard = "3"
+enigo = "0.2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+base64 = "0.22"
+log = "0.4"
+tauri-plugin-log = "2"
+directories = "5"
+
+[target.'cfg(windows)'.dependencies]
+clipboard-win = "5"
