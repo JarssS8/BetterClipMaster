@@ -29,9 +29,22 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Release version: $version"
 
+  check:
+    name: Core tests (gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt -p godclipboard-core -- --check
+      - run: cargo clippy -p godclipboard-core -- -D warnings
+      - run: cargo test -p godclipboard-core
+
   release:
     name: Build & release (${{ matrix.os }})
-    needs: version
+    needs: [version, check]
     strategy:
       fail-fast: false
       matrix:
