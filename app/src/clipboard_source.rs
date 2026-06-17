@@ -5,8 +5,11 @@
 //! On Windows we additionally detect the "Clipboard Viewer Ignore" marker so
 //! password-manager payloads are never captured.
 //!
-//! Capture of rich-text (HTML) and file lists from the OS clipboard is a
-//! follow-up (the core model already supports both kinds); see README.
+//! On macOS we use NSPasteboard.changeCount for reliable change detection:
+//! it increments on every write regardless of format or source (keyboard,
+//! context menu, programmatic). This prevents misses that the hash-only
+//! approach could produce when arboard can't read an intermediate clipboard
+//! state during a write.
 
 use betterclipmaster_core::model::{compute_hash, ClipKind};
 use betterclipmaster_core::watcher::{Capture, ClipboardSource};
@@ -15,6 +18,13 @@ use betterclipmaster_core::watcher::{Capture, ClipboardSource};
 pub struct OsClipboard {
     clip: arboard::Clipboard,
     last_hash: Option<String>,
+    /// macOS: last observed NSPasteboard.changeCount.
+    #[cfg(target_os = "macos")]
+    last_change_count: isize,
+    /// macOS: changeCount advanced but read_current() returned None (transient
+    /// empty state during write) — retry on the next poll.
+    #[cfg(target_os = "macos")]
+    pending_read: bool,
 }
 
 impl OsClipboard {
@@ -22,6 +32,10 @@ impl OsClipboard {
         Ok(OsClipboard {
             clip: arboard::Clipboard::new()?,
             last_hash: None,
+            #[cfg(target_os = "macos")]
+            last_change_count: macos_change_count(),
+            #[cfg(target_os = "macos")]
+            pending_read: false,
         })
     }
 
@@ -50,8 +64,14 @@ impl OsClipboard {
                 });
             }
         }
-        // Then image.
+        // Image: hash raw RGBA bytes before the expensive PNG encode.
+        // If the image hasn't changed since last capture, skip encoding entirely.
         if let Ok(img) = self.clip.get_image() {
+            use betterclipmaster_core::model::compute_hash;
+            let raw_hash = compute_hash(ClipKind::Image, "", Some(img.bytes.as_ref()));
+            if self.last_hash.as_deref() == Some(raw_hash.as_str()) {
+                return None;
+            }
             let label = format!("Imagen {}x{}", img.width, img.height);
             if let Some(png) = Self::encode_png(&img) {
                 return Some(Capture {
@@ -66,9 +86,48 @@ impl OsClipboard {
     }
 }
 
+/// Query NSPasteboard.generalPasteboard.changeCount.
+/// Increments on every clipboard write regardless of format or source.
+#[cfg(target_os = "macos")]
+fn macos_change_count() -> isize {
+    use objc2::{class, msg_send};
+    use objc2::runtime::AnyObject;
+    unsafe {
+        let pb: *mut AnyObject = msg_send![class!(NSPasteboard), generalPasteboard];
+        msg_send![pb, changeCount]
+    }
+}
+
 impl ClipboardSource for OsClipboard {
     fn read(&mut self) -> Option<Capture> {
-        let capture = self.read_current()?;
+        #[cfg(target_os = "macos")]
+        {
+            let current = macos_change_count();
+            if current != self.last_change_count {
+                // A write happened — reset retry state and record new count.
+                self.last_change_count = current;
+                self.pending_read = false;
+            } else if !self.pending_read {
+                // Nothing changed and no pending retry.
+                return None;
+            }
+        }
+
+        let Some(capture) = self.read_current() else {
+            // Clipboard changed but content not yet readable (transient empty
+            // state during a write). Retry on the next poll.
+            #[cfg(target_os = "macos")]
+            {
+                self.pending_read = true;
+            }
+            return None;
+        };
+
+        #[cfg(target_os = "macos")]
+        {
+            self.pending_read = false;
+        }
+
         let hash = compute_hash(capture.kind, &capture.content, capture.blob.as_deref());
         if self.last_hash.as_deref() == Some(hash.as_str()) {
             return None; // unchanged since last poll
