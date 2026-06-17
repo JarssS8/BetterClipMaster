@@ -1,16 +1,20 @@
 //! Fuzzy ranking of clipboard items, Alfred-style.
 
+use std::borrow::Cow;
+
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher, Utf32Str};
 
 use crate::model::ClipItem;
 
 /// What text we match a query against for a given item.
-fn haystack(item: &ClipItem) -> String {
-    if item.content.is_empty() {
-        item.preview.clone()
+/// Borrows `preview` directly when `content` is empty or identical to it,
+/// avoiding an allocation on the common text-item path.
+fn haystack(item: &ClipItem) -> Cow<str> {
+    if item.content.is_empty() || item.content == item.preview {
+        Cow::Borrowed(&item.preview)
     } else {
-        format!("{} {}", item.preview, item.content)
+        Cow::Owned(format!("{} {}", item.preview, item.content))
     }
 }
 
