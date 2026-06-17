@@ -120,6 +120,7 @@ pub fn run() {
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             commands::list,
+            commands::get_item_image,
             commands::pin,
             commands::remove,
             commands::toggle_pause,

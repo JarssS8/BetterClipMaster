@@ -13,7 +13,7 @@ use betterclipmaster_core::{rank, Store};
 use crate::settings::Settings;
 
 /// Maximum items pulled from the store before fuzzy filtering.
-const LIST_LIMIT: usize = 1000;
+const LIST_LIMIT: usize = 300;
 
 /// Shared application state.
 pub struct AppState {
@@ -46,8 +46,8 @@ impl AppState {
     }
 }
 
-/// Data sent to the UI for a single item. Image blobs become data URLs; other
-/// kinds carry their text/HTML/paths in `content`.
+/// Data sent to the UI for a single item. Image blobs are NOT included here;
+/// use `get_item_image` to fetch a single image on demand.
 #[derive(Serialize)]
 pub struct ItemDto {
     pub id: i64,
@@ -55,25 +55,16 @@ pub struct ItemDto {
     pub preview: String,
     pub content: String,
     pub pinned: bool,
-    pub dataurl: Option<String>,
 }
 
 impl From<&ClipItem> for ItemDto {
     fn from(item: &ClipItem) -> ItemDto {
-        let dataurl = match (item.kind, &item.blob) {
-            (ClipKind::Image, Some(bytes)) => {
-                let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
-                Some(format!("data:image/png;base64,{b64}"))
-            }
-            _ => None,
-        };
         ItemDto {
             id: item.id,
             kind: item.kind.as_str().to_string(),
             preview: item.preview.clone(),
             content: item.content.clone(),
             pinned: item.pinned,
-            dataurl,
         }
     }
 }
@@ -83,12 +74,28 @@ fn map_err<E: std::fmt::Display>(e: E) -> String {
 }
 
 /// Return history items matching `query` (empty query = full history).
+/// Image blobs are not included; use `get_item_image` to fetch on demand.
 #[tauri::command]
 pub fn list(state: State<AppState>, query: String) -> Result<Vec<ItemDto>, String> {
     let store = state.store.lock().map_err(map_err)?;
     let items = store.recent(LIST_LIMIT).map_err(map_err)?;
     let ranked = rank(&items, &query);
     Ok(ranked.iter().map(ItemDto::from).collect())
+}
+
+/// Return the base64 data URL for a single image item, or None if the item
+/// is not found or has no image blob.
+#[tauri::command]
+pub fn get_item_image(state: State<AppState>, id: i64) -> Result<Option<String>, String> {
+    let store = state.store.lock().map_err(map_err)?;
+    let item = store.get(id).map_err(map_err)?;
+    let dataurl = item.and_then(|it| {
+        it.blob.map(|bytes| {
+            let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+            format!("data:image/png;base64,{b64}")
+        })
+    });
+    Ok(dataurl)
 }
 
 /// Pin or unpin an item.
