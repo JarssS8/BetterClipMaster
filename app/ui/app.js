@@ -11,6 +11,14 @@ const previewEl = document.getElementById("preview");
 let items = [];
 let selected = 0;
 
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
 function escapeHtml(s) {
   return s
     .replace(/&/g, "&amp;")
@@ -46,11 +54,6 @@ function render() {
       `<span class="row-text">${escapeHtml(item.preview)}</span>` +
       pin +
       `<span class="tag">${item.kind}</span>`;
-    li.addEventListener("click", () => {
-      selected = i;
-      render();
-    });
-    li.addEventListener("dblclick", () => paste(item.id));
     listEl.appendChild(li);
   });
   renderPreview(items[selected]);
@@ -58,14 +61,25 @@ function render() {
   if (sel) sel.scrollIntoView({ block: "nearest" });
 }
 
-function renderPreview(item) {
+async function renderPreview(item) {
   if (!item) {
     previewEl.innerHTML = "";
     return;
   }
-  if (item.kind === "image" && item.dataurl) {
-    previewEl.innerHTML = `<img src="${item.dataurl}" alt="imagen" />`;
-  } else if (item.kind === "files") {
+  if (item.kind === "image") {
+    try {
+      const dataurl = await invoke("get_item_image", { id: item.id });
+      if (dataurl) {
+        previewEl.innerHTML = `<img src="${dataurl}" alt="imagen" />`;
+      } else {
+        previewEl.innerHTML = "";
+      }
+    } catch (e) {
+      previewEl.innerHTML = "";
+    }
+    return;
+  }
+  if (item.kind === "files") {
     const rows = item.content
       .split("\n")
       .filter((p) => p.length)
@@ -111,10 +125,24 @@ function move(delta) {
   render();
 }
 
-queryEl.addEventListener("input", () => {
+// Single delegated click listener — no per-row listeners ever created.
+listEl.addEventListener("click", (e) => {
+  const li = e.target.closest("li[data-index]");
+  if (!li) return;
+  selected = Number(li.dataset.index);
+  render();
+});
+
+listEl.addEventListener("dblclick", (e) => {
+  const li = e.target.closest("li[data-index]");
+  if (!li) return;
+  paste(items[Number(li.dataset.index)].id);
+});
+
+queryEl.addEventListener("input", debounce(() => {
   selected = 0;
   refresh();
-});
+}, 150));
 
 document.addEventListener("keydown", (e) => {
   switch (e.key) {
