@@ -25,7 +25,7 @@ use clipboard_source::OsClipboard;
 use commands::AppState;
 
 /// How often the watcher polls the OS clipboard.
-const POLL_INTERVAL: Duration = Duration::from_millis(500);
+const POLL_INTERVAL: Duration = Duration::from_millis(1000);
 
 /// Path to the history database in the per-user data directory.
 fn db_path() -> std::path::PathBuf {
@@ -63,6 +63,7 @@ fn spawn_watcher(
                 return;
             }
         };
+        let mut poll_count: u32 = 0;
         loop {
             if !paused.load(Ordering::SeqCst) {
                 let skip = ignore_sensitive.load(Ordering::SeqCst);
@@ -72,6 +73,10 @@ fn spawn_watcher(
                     }
                     Ok(None) => {}
                     Err(e) => log::warn!("watcher: {e}"),
+                }
+                poll_count += 1;
+                if poll_count % 60 == 0 {
+                    let _ = store.prune(max_items.load(Ordering::SeqCst));
                 }
             }
             std::thread::sleep(POLL_INTERVAL);
