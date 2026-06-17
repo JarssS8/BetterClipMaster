@@ -17,7 +17,12 @@ use betterclipmaster_core::watcher::{Capture, ClipboardSource};
 /// Polling clipboard reader with change detection.
 pub struct OsClipboard {
     clip: arboard::Clipboard,
+    /// Hash of the last successfully captured item (used by `read()` for dedup).
     last_hash: Option<String>,
+    /// Hash of the raw RGBA bytes of the last image seen on the clipboard.
+    /// Stored separately so `read_current()` can skip PNG encode when the
+    /// image is unchanged, regardless of platform.
+    last_image_raw_hash: Option<String>,
     /// macOS: last observed NSPasteboard.changeCount.
     #[cfg(target_os = "macos")]
     last_change_count: isize,
@@ -32,6 +37,7 @@ impl OsClipboard {
         Ok(OsClipboard {
             clip: arboard::Clipboard::new()?,
             last_hash: None,
+            last_image_raw_hash: None,
             #[cfg(target_os = "macos")]
             last_change_count: macos_change_count(),
             #[cfg(target_os = "macos")]
@@ -64,14 +70,15 @@ impl OsClipboard {
                 });
             }
         }
-        // Image: hash raw RGBA bytes before the expensive PNG encode.
-        // If the image hasn't changed since last capture, skip encoding entirely.
+        // Image: hash the raw RGBA bytes BEFORE the expensive PNG encode.
+        // `last_image_raw_hash` tracks raw bytes independently of `last_hash`
+        // (which tracks the final PNG-based hash) so the comparison is valid.
         if let Ok(img) = self.clip.get_image() {
-            use betterclipmaster_core::model::compute_hash;
             let raw_hash = compute_hash(ClipKind::Image, "", Some(img.bytes.as_ref()));
-            if self.last_hash.as_deref() == Some(raw_hash.as_str()) {
-                return None;
+            if self.last_image_raw_hash.as_deref() == Some(raw_hash.as_str()) {
+                return None; // same image — skip expensive PNG encode
             }
+            self.last_image_raw_hash = Some(raw_hash);
             let label = format!("Imagen {}x{}", img.width, img.height);
             if let Some(png) = Self::encode_png(&img) {
                 return Some(Capture {
