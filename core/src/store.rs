@@ -49,20 +49,6 @@ impl Store {
         Ok(Store { conn })
     }
 
-    /// Wall-clock millis, forced strictly greater than any stored timestamp.
-    fn next_ts(&self) -> Result<i64> {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_millis() as i64)
-            .unwrap_or(0);
-        let max: i64 =
-            self.conn
-                .query_row("SELECT COALESCE(MAX(created_at), 0) FROM clips", [], |r| {
-                    r.get(0)
-                })?;
-        Ok(now.max(max + 1))
-    }
-
     /// Insert a captured item.
     ///
     /// - If it is identical to the current most-recent item, returns `None`
@@ -70,12 +56,16 @@ impl Store {
     /// - If an identical item exists elsewhere, that row is bumped to the top
     ///   (no duplicate row) and its id is returned.
     /// - Otherwise a new row is inserted and its id returned.
+    ///
+    /// All reads and the write run inside a single IMMEDIATE transaction to
+    /// eliminate the race window between the duplicate check and the insert.
     pub fn insert(&self, item: &NewItem) -> Result<Option<i64>> {
         let hash = item.hash();
 
+        let tx = self.conn.unchecked_transaction()?;
+
         // Consecutive duplicate of the most recent item -> ignore.
-        let most_recent: Option<String> = self
-            .conn
+        let most_recent: Option<String> = tx
             .query_row(
                 "SELECT hash FROM clips ORDER BY created_at DESC, id DESC LIMIT 1",
                 [],
@@ -83,14 +73,25 @@ impl Store {
             )
             .optional()?;
         if most_recent.as_deref() == Some(hash.as_str()) {
+            tx.rollback()?;
             return Ok(None);
         }
 
-        let ts = self.next_ts()?;
+        let ts = {
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|d| d.as_millis() as i64)
+                .unwrap_or(0);
+            let max: i64 = tx.query_row(
+                "SELECT COALESCE(MAX(created_at), 0) FROM clips",
+                [],
+                |r| r.get(0),
+            )?;
+            now.max(max + 1)
+        };
 
         // Existing-but-not-most-recent -> bump to top.
-        let existing: Option<i64> = self
-            .conn
+        let existing: Option<i64> = tx
             .query_row(
                 "SELECT id FROM clips WHERE hash = ?1 LIMIT 1",
                 params![hash],
@@ -98,14 +99,15 @@ impl Store {
             )
             .optional()?;
         if let Some(id) = existing {
-            self.conn.execute(
+            tx.execute(
                 "UPDATE clips SET created_at = ?1 WHERE id = ?2",
                 params![ts, id],
             )?;
+            tx.commit()?;
             return Ok(Some(id));
         }
 
-        self.conn.execute(
+        tx.execute(
             "INSERT INTO clips (kind, content, blob, preview, pinned, created_at, hash)
              VALUES (?1, ?2, ?3, ?4, 0, ?5, ?6)",
             params![
@@ -117,7 +119,9 @@ impl Store {
                 hash
             ],
         )?;
-        Ok(Some(self.conn.last_insert_rowid()))
+        let id = tx.last_insert_rowid();
+        tx.commit()?;
+        Ok(Some(id))
     }
 
     /// Most recent items first (pinned float to the top), limited.
@@ -194,7 +198,7 @@ impl Store {
     }
 
     fn query(&self, sql: &str, params: impl rusqlite::Params) -> Result<Vec<ClipItem>> {
-        let mut stmt = self.conn.prepare(sql)?;
+        let mut stmt = self.conn.prepare_cached(sql)?;
         let rows = stmt.query_map(params, |row| {
             let kind_s: String = row.get(1)?;
             let pinned_i: i64 = row.get(5)?;
